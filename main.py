@@ -17,6 +17,8 @@ class DoublePendulum:
         self.omega1 = omega1
         self.omega2 = omega2
 
+        self.trail = []
+
     def get_cartesian_coords(self):
         x1 = self.L1 * np.sin(self.theta1)
         y1 = self.L1 * np.cos(self.theta1)
@@ -68,6 +70,27 @@ class DoublePendulum:
         new_state = current_state + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
         self.theta1, self.theta2, self.omega1, self.omega2 = new_state
 
+    def draw(self, screen, origin):
+        # coords calculation
+        x1, y1, x2, y2 = self.get_cartesian_coords()
+        x1 = x1 + origin[0]
+        x2 = x2 + origin[0]
+        y1 = y1 + origin[1]
+        y2 = y2 + origin[1]
+
+        if len(self.trail) > 150:  # save 150 pts of trail
+            self.trail.pop(0)
+        self.trail.append((x2, y2))
+
+        if len(self.trail) > 1:  # trails draw
+            pg.draw.lines(screen, (255, 0, 0), False, self.trail, 2)
+
+        #  wires + masses drawing
+        pg.draw.line(screen, (0, 0, 255), origin, (x1, y1), 5)
+        pg.draw.line(screen, (0, 0, 255), (x1, y1), (x2, y2), 5)
+        pg.draw.circle(screen, (0, 255, 0), (x1, y1), 10)
+        pg.draw.circle(screen, (0, 255, 0), (x2, y2), 10)
+
 
 # setup of the screen and system
 WIDTH, HEIGHT = 800, 600
@@ -85,37 +108,16 @@ pendulum = DoublePendulum(20, 20, 150, 150, np.pi / 2, np.pi / 2)
 running = True
 dt = 0.05  # the step length (smaller >> faster)
 
-trail = []  # list of trail points
-
 while running:
     for event in pg.event.get():  # quit option
         if event.type == pg.QUIT:
             running = False
 
-    pendulum.step(dt)
+    pendulum.step(dt)  # Physics calculation
 
     screen.fill((255, 255, 255))  # white screen initialization
 
-    # coords calculation
-    x1, y1, x2, y2 = pendulum.get_cartesian_coords()
-    x1 = x1 + ORIGIN[0]
-    x2 = x2 + ORIGIN[0]
-    y1 = y1 + ORIGIN[1]
-    y2 = y2 + ORIGIN[1]
-
-    if len(trail) > 150:  # save 150 pts of trail
-        trail.pop(0)
-    trail.append((x2, y2))
-
-    if len(trail) > 1:  # trails draw
-        pg.draw.lines(screen, (255, 0, 0), False, trail, 2)
-
-    #  wires + masses drawing
-    pg.draw.line(screen, (0, 255, 0), ORIGIN, (x1, y1), 5)
-    pg.draw.line(screen, (0, 255, 0), (x1, y1), (x2, y2), 5)
-    pg.draw.circle(screen, (0, 255, 0), (x1, y1), 10)
-    pg.draw.circle(screen, (0, 255, 0), (x2, y2), 10)
-
+    pendulum.draw(screen, ORIGIN)
 
     pg.display.flip()
     clock.tick(60)
