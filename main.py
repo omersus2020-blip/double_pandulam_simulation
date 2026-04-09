@@ -26,6 +26,7 @@ class DoublePendulum:
 
         return x1, y1, x2, y2
 
+    # func that calculates and angular accelerations by a formula.
     def get_accelerations(self, theta1, theta2, omega1, omega2):
         delta_theta = theta1 - theta2
 
@@ -48,6 +49,7 @@ class DoublePendulum:
 
         return alpha1, alpha2
 
+    # get the vector of the derivatives by time
     def get_derivatives(self, state):
         theta1, theta2, omega1, omega2 = state
 
@@ -55,6 +57,7 @@ class DoublePendulum:
 
         return np.array([omega1, omega2, alpha1, alpha2])
 
+    # The RK4 algorithm which calculates the average derivative by 4 different points.
     def step(self, dt):
         current_state = np.array([self.theta1, self.theta2, self.omega1, self.omega2])
         k1 = self.get_derivatives(current_state)
@@ -66,7 +69,7 @@ class DoublePendulum:
         self.theta1, self.theta2, self.omega1, self.omega2 = new_state
 
 
-# --- הגדרות המסך והמערכת ---
+# setup of the screen and system
 WIDTH, HEIGHT = 800, 600
 ORIGIN = (WIDTH // 2, HEIGHT // 3)  # נקודת התלייה של המטוטלת
 
@@ -75,47 +78,46 @@ screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Double Pendulum Simulation")
 clock = pg.time.Clock()
 
-# 1. יצירת האובייקט של המטוטלת (עם אורכים מותאמים לפיקסלים במסך)
-# m1=10, m2=10, L1=150, L2=150, theta1=np.pi/2, theta2=np.pi/2
+# creation of the object of the class (the Double pendulum)
+# masses 1,2 | wire len 1,2 and starting angle
 pendulum = DoublePendulum(20, 20, 150, 150, np.pi / 2, np.pi / 2)
 
 running = True
-dt = 0.05  # גודל צעד הזמן (אפשר לשחק עם זה אחר כך כדי להאיץ/להאט)
+dt = 0.05  # the step length (smaller >> faster)
 
-trail = []
+trail = []  # list of trail points
 
 while running:
-    # --- טיפול באירועים ---
-    for event in pg.event.get():
+    for event in pg.event.get():  # quit option
         if event.type == pg.QUIT:
             running = False
 
-    # --- עדכון הפיזיקה ---
     pendulum.step(dt)
 
-    # --- ציור המסך ---
-    screen.fill((255, 255, 255))  # ניקוי המסך לצבע לבן
+    screen.fill((255, 255, 255))  # white screen initialization
 
-    # המשימה שלך מתחילה כאן!
+    # coords calculation
     x1, y1, x2, y2 = pendulum.get_cartesian_coords()
     x1 = x1 + ORIGIN[0]
     x2 = x2 + ORIGIN[0]
     y1 = y1 + ORIGIN[1]
     y2 = y2 + ORIGIN[1]
 
-    if len(trail) > 150:
+    if len(trail) > 150:  # save 150 pts of trail
         trail.pop(0)
     trail.append((x2, y2))
 
-    if len(trail) > 1:
+    if len(trail) > 1:  # trails draw
         pg.draw.lines(screen, (255, 0, 0), False, trail, 2)
 
+    #  wires + masses drawing
     pg.draw.line(screen, (0, 255, 0), ORIGIN, (x1, y1), 5)
     pg.draw.line(screen, (0, 255, 0), (x1, y1), (x2, y2), 5)
     pg.draw.circle(screen, (0, 255, 0), (x1, y1), 10)
     pg.draw.circle(screen, (0, 255, 0), (x2, y2), 10)
 
-    pg.display.flip()  # עדכון התצוגה למסך
-    clock.tick(60)  # הגבלת קצב הריצה ל-60 פריימים בשנייה
+
+    pg.display.flip()
+    clock.tick(60)
 
 pg.quit()
